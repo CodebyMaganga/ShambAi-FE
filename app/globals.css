@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Premium Impact Report Palette */
+    --background: 36 30% 96%;
+    --foreground: 0 0% 12%;
+    --card: 36 33% 99%;
+    --card-foreground: 0 0% 12%;
+    --popover: 36 33% 99%;
+    --popover-foreground: 0 0% 12%;
+    --primary: 93 36% 41%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 24% 90%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 36 24% 92%;
+    --muted-foreground: 0 0% 35%;
+    --accent: 115 23% 37%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 36 20% 85%;
+    --input: 36 20% 85%;
+    --ring: 93 36% 41%;
+    --radius: 0.75rem;
+
+    /* Extended palette */
+    --success: 115 23% 37%;
+    --success-foreground: 0 0% 100%;
+    --warning: 40 84% 53%;
+    --warning-foreground: 0 0% 12%;
+    --info: 200 65% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Custom semantic colors */
+    --earth-brown: 36 42% 41%;
+    --agriculture-green: 115 23% 37%;
+    --warm-sand: 38 46% 90%;
+    --dark-brown: 0 0% 12%;
+    --cream: 36 33% 97%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "salt" on;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Typography */
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .headline-xl {
+    @apply font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight;
+  }
+
+  .headline-lg {
+    @apply font-serif text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight;
+  }
+
+  .headline-md {
+    @apply font-serif text-2xl md:text-3xl font-semibold leading-snug;
+  }
+
+  .body-lg {
+    @apply text-lg md:text-xl leading-relaxed font-normal;
+  }
+
+  .body-md {
+    @apply text-base md:text-lg leading-relaxed font-normal;
+  }
+
+  /* Stat number for editorial style */
+  .stat-editorial {
+    @apply font-serif text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight;
+  }
+
+  /* Cards */
+  .card-editorial {
+    @apply rounded-2xl border bg-card p-6 md:p-8 shadow-sm transition-all duration-300;
+  }
+
+  .card-editorial:hover {
+    @apply shadow-lg;
+  }
+
+  /* Section spacing */
+  .section-padding {
+    @apply px-6 py-16 md:px-12 md:py-24 lg:px-20 lg:py-32;
+  }
+
+  /* Container */
+  .container-editorial {
+    @apply mx-auto max-w-7xl;
+  }
+
+  /* Dividers */
+  .divider-light {
+    @apply border-t border-border/50;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-white transition-all hover:bg-primary/90 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-8 py-4 text-base font-semibold text-foreground transition-all hover:bg-muted hover:shadow-md;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--earth-brown)), hsl(var(--agriculture-green)));
+  }
+
+  /* Fade animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(10px);
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/40;
+}
