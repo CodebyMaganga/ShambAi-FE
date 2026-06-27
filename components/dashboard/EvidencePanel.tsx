@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Wheat, Clock, CheckCircle, XCircle, Network } from 'lucide-react';
-import { api, Farmer, Assessment } from '@/lib/api';
+import { api, Farmer, Assessment,getCropDisplay } from '@/lib/api';
 
 interface EvidencePanelProps {
   farmer: Farmer | null;
@@ -69,7 +69,9 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
 
                   <div className="flex flex-wrap gap-4 mb-6 text-gray-300 text-sm">
                     <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gray-500" /> {detail.location}</span>
-                    <span className="flex items-center gap-1"><Wheat className="h-4 w-4 text-gray-500" /> {detail.cropType}</span>
+                    <span className="flex items-center gap-1">
+  <Wheat className="h-4 w-4 text-gray-500" /> {getCropDisplay(detail.cropType)}
+</span>
                     <span className="flex items-center gap-1"><Network className="h-4 w-4 text-gray-500" /> {detail.communityTies}</span>
                     <span className="flex items-center gap-1"><Clock className="h-4 w-4 text-gray-500" /> {new Date(detail.lastScoredAt).toLocaleDateString()}</span>
                   </div>

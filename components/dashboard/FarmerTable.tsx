@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api, Farmer } from '@/lib/api';
 import { ChevronRight } from 'lucide-react';
+import { getCropDisplay } from '@/lib/api';
 
 interface FarmerTableProps {
   onSelectFarmer: (farmer: Farmer) => void;
@@ -53,7 +54,9 @@ export function FarmerTable({ onSelectFarmer }: FarmerTableProps) {
               >
                 <td className="py-3 text-white font-mono text-xs">{farmer.phoneHash.slice(0, 12)}…</td>
                 <td className="py-3 text-gray-300 capitalize">{farmer.location}</td>
-                <td className="py-3 text-gray-300 capitalize">{farmer.cropType}</td>
+                <td className="py-3 text-gray-300 capitalize">
+  {getCropDisplay(farmer.cropType)}
+</td>
                 <td className="py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                     farmer.currentTier === 1 ? 'bg-yellow-500/20 text-yellow-400' :

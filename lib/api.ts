@@ -36,7 +36,7 @@ export interface Farmer {
   _id: string;
   phoneHash: string;
   location: string;
-  cropType: string;
+  cropType: string | { category: string; crops: string[] };
   communityTies: string;
   currentTier: number;
   currentScore: number | null;
@@ -95,6 +95,17 @@ export interface EvidenceRecord {
   verifiedAt: string | null;
 }
 
+// lib/api.ts  (or helpers.ts)
+export function getCropDisplay(cropType: any): string {
+  if (typeof cropType === 'string') return cropType;
+  if (cropType && typeof cropType === 'object') {
+    const category = cropType.category || '';
+    const crops = cropType.crops?.length ? cropType.crops.join(', ') : '';
+    return category + (crops ? ` (${crops})` : '');
+  }
+  return '—';
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -140,3 +151,4 @@ export const api = {
     return res.json();
   },
 };
+
