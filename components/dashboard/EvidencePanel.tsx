@@ -1,278 +1,164 @@
-// src/components/dashboard/EvidencePanel.tsx
 'use client';
 import { useEffect, useState } from 'react';
-import { api, Farmer, EvidenceRecord, Chama } from '@/lib/api';
-import { TierBadge } from './TierBadge';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, MapPin, Wheat, Clock, CheckCircle, XCircle, Network } from 'lucide-react';
+import { api, Farmer, Assessment } from '@/lib/api';
 
-interface Props {
+interface EvidencePanelProps {
   farmer: Farmer | null;
   onClose: () => void;
 }
 
-const LAND_TYPES = ['Title Deed', 'Lease Agreement', 'Family Land'];
-
-export function EvidencePanel({ farmer, onClose }: Props) {
-  const [evidence, setEvidence]   = useState<EvidenceRecord | null>(null);
-  const [chamas, setChamas]       = useState<Chama[]>([]);
-  const [saving, setSaving]       = useState(false);
-  const [saved, setSaved]         = useState(false);
-  const [uploading, setUploading] = useState<string | null>(null); // field name being uploaded
-
-  // Form state
-  const [chamaId, setChamaId]         = useState('');
-  const [landType, setLandType]       = useState('');
-  const [notes, setNotes]             = useState('');
-  const [mpesaFile, setMpesaFile]     = useState('');
-  const [landFile, setLandFile]       = useState('');
-  const [chamaVerified, setChamaVerified]     = useState(false);
-  const [coopVerified, setCoopVerified]       = useState(false);
-  const [leaderConfirmed, setLeaderConfirmed] = useState(false);
+export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
+  const [detail, setDetail] = useState<Farmer | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!farmer) return;
-    setSaved(false);
+    if (!farmer?.phoneHash) return;
+    setLoading(true);
+    api.farmerDetail(farmer.phoneHash)
+      .then(data => setDetail(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [farmer?.phoneHash]);
 
-    // Load evidence and chamas in parallel
-    Promise.all([
-      api.evidence(farmer.phoneHash),
-      api.chamas(farmer.location ? capitalise(farmer.location) : undefined),
-    ]).then(([ev, ch]) => {
-      setEvidence(ev);
-      setChamas(ch);
-
-      // Pre-fill form from saved evidence
-      setChamaId(ev.chama.id || '');
-      setLandType(ev.land.type || '');
-      setNotes(ev.notes || '');
-      setMpesaFile(ev.mpesaStatement.filename || '');
-      setLandFile(ev.land.filename || '');
-      setChamaVerified(ev.communityVerification.chamaMembershipVerified);
-      setCoopVerified(ev.communityVerification.cooperativeMemberVerified);
-      setLeaderConfirmed(ev.communityVerification.womensGroupLeaderConfirmed);
-    }).catch(() => {});
-  }, [farmer]);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'mpesa' | 'land') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(field);
-    try {
-      const { filename } = await api.uploadFile(file);
-      if (field === 'mpesa') setMpesaFile(filename);
-      else setLandFile(filename);
-    } catch {
-      alert('Upload failed. Check your backend is running.');
-    } finally {
-      setUploading(null);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!farmer) return;
-    setSaving(true);
-    try {
-      await api.saveEvidence(farmer.phoneHash, {
-        mpesaStatement:             mpesaFile || undefined,
-        chama:                      chamaId   || undefined,
-        landType:                   landType  || undefined,
-        landDocument:               landFile  || undefined,
-        chamaMembershipVerified:    chamaVerified,
-        cooperativeMemberVerified:  coopVerified,
-        womensGroupLeaderConfirmed: leaderConfirmed,
-        notes,
-        verifiedBy: 'field_officer', // replace with actual officer ID when auth is wired
-      });
-      setSaved(true);
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!farmer) return null;
-
-  const CROP_LABELS: Record<string, string> = {
-    crops: 'Maize / Beans', dairy: 'Dairy', horticulture: 'Horticulture', mixed: 'Mixed',
-  };
+  const latestAssessment: Assessment | undefined = detail?.assessmentHistory?.[0];
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {farmer && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          />
 
-      {/* Drawer */}
-      <aside className="fixed right-0 top-0 h-full w-full max-w-xl bg-gray-950 border-l border-gray-800 z-50 overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-500 font-mono">{farmer.phoneHash.slice(0, 16)}…</p>
-            <div className="flex items-center gap-2 mt-1">
-              <TierBadge tier={farmer.currentTier} />
-              <span className="text-white font-semibold">{farmer.currentScore ?? '—'}/100</span>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white text-2xl leading-none">×</button>
-        </div>
-
-        <div className="px-6 py-5 space-y-6">
-          {/* Farmer summary */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Location',  value: capitalise(farmer.location) },
-              { label: 'Crop',      value: CROP_LABELS[farmer.cropType] || farmer.cropType },
-              { label: 'Community', value: capitalise(farmer.communityTies || 'None') },
-              { label: 'Land',      value: capitalise(farmer.farmAccess || '—') },
-              { label: 'Assessments', value: String(farmer.assessmentCount) },
-              { label: 'Last scored', value: farmer.lastScoredAt ? new Date(farmer.lastScoredAt).toLocaleDateString('en-KE') : '—' },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-gray-900 rounded-lg p-3">
-                <p className="text-xs text-gray-500">{label}</p>
-                <p className="text-sm text-white font-medium mt-0.5 capitalize">{value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Evidence verification form */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
-              Evidence Verification
-            </h3>
-
-            <div className="space-y-5">
-              {/* M-Pesa statement */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">M-Pesa Statement</label>
-                {mpesaFile ? (
-                  <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                    <span className="text-green-400 text-xs">✓</span>
-                    <span className="text-green-400 text-sm truncate">{mpesaFile}</span>
-                    <button onClick={() => setMpesaFile('')} className="ml-auto text-gray-500 hover:text-red-400 text-xs">Remove</button>
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-2 bg-gray-800 border border-gray-700 border-dashed rounded-lg px-4 py-3 cursor-pointer hover:border-gray-600 transition-colors">
-                    <span className="text-gray-400 text-sm">
-                      {uploading === 'mpesa' ? 'Uploading…' : 'Choose file (PDF, JPG, PNG)'}
-                    </span>
-                    <input
-                      type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only"
-                      onChange={e => handleUpload(e, 'mpesa')}
-                      disabled={uploading !== null}
-                    />
-                  </label>
-                )}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed top-0 right-0 z-50 h-full w-full max-w-2xl bg-gray-900 shadow-2xl overflow-y-auto"
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Farmer Detail</h3>
+                <button onClick={onClose} className="text-gray-400 hover:text-white"><X className="h-5 w-5" /></button>
               </div>
 
-              {/* Chama dropdown */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Registered Chama / Group</label>
-                <select
-                  value={chamaId} onChange={e => setChamaId(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-green-500"
-                >
-                  <option value="">— Select group —</option>
-                  {chamas.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.subCounty})</option>
-                  ))}
-                </select>
-              </div>
+              {loading && <p className="text-gray-400">Loading…</p>}
+              {error && <p className="text-red-400">{error}</p>}
 
-              {/* Land document */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Land Document</label>
-                <div className="flex gap-2 mb-2">
-                  {LAND_TYPES.map(lt => (
-                    <button
-                      key={lt}
-                      onClick={() => setLandType(lt)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                        landType === lt
-                          ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                      }`}
-                    >
-                      {lt}
-                    </button>
-                  ))}
-                </div>
-                {landFile ? (
-                  <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                    <span className="text-green-400 text-xs">✓</span>
-                    <span className="text-green-400 text-sm truncate">{landFile}</span>
-                    <button onClick={() => setLandFile('')} className="ml-auto text-gray-500 hover:text-red-400 text-xs">Remove</button>
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-2 bg-gray-800 border border-gray-700 border-dashed rounded-lg px-4 py-3 cursor-pointer hover:border-gray-600 transition-colors">
-                    <span className="text-gray-400 text-sm">
-                      {uploading === 'land' ? 'Uploading…' : 'Upload document'}
-                    </span>
-                    <input
-                      type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only"
-                      onChange={e => handleUpload(e, 'land')}
-                      disabled={uploading !== null}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Community verification checkboxes */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Community Verification</label>
-                <div className="space-y-2">
-                  {[
-                    { label: 'Chama membership verified', state: chamaVerified, set: setChamaVerified },
-                    { label: 'Cooperative membership verified', state: coopVerified, set: setCoopVerified },
-                    { label: "Women's group leader confirmed", state: leaderConfirmed, set: setLeaderConfirmed },
-                  ].map(({ label, state, set }) => (
-                    <label key={label} className="flex items-center gap-3 cursor-pointer group">
-                      <div
-                        onClick={() => set(!state)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                          state ? 'bg-green-500 border-green-500' : 'border-gray-600 group-hover:border-gray-500'
-                        }`}
-                      >
-                        {state && <span className="text-white text-xs">✓</span>}
+              {detail && (
+                <>
+                  {/* … all the same detail content, using detail.location, detail.cropType, etc. … */}
+                  {/* I'm keeping the full content from the earlier example, but you can drop the exact same JSX. */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 text-white font-mono text-lg">{detail.phoneHash.slice(0, 2)}</div>
+                      <div>
+                        <p className="text-white font-mono text-sm">{detail.phoneHash.slice(0, 20)}…</p>
+                        <p className="text-gray-400 text-xs">Hash ID</p>
                       </div>
-                      <span className="text-sm text-gray-300">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-              {/* Officer notes */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Field Officer Notes</label>
-                <textarea
-                  value={notes} onChange={e => setNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Visited farmer at Karai farm. Chama chairlady confirmed membership."
-                  className="w-full bg-gray-800 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-green-500 resize-none placeholder-gray-600"
-                />
-              </div>
+                  <div className="flex flex-wrap gap-4 mb-6 text-gray-300 text-sm">
+                    <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gray-500" /> {detail.location}</span>
+                    <span className="flex items-center gap-1"><Wheat className="h-4 w-4 text-gray-500" /> {detail.cropType}</span>
+                    <span className="flex items-center gap-1"><Network className="h-4 w-4 text-gray-500" /> {detail.communityTies}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-4 w-4 text-gray-500" /> {new Date(detail.lastScoredAt).toLocaleDateString()}</span>
+                  </div>
 
-              {/* Save button */}
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
-                  saved
-                    ? 'bg-green-600/20 border border-green-600/40 text-green-400'
-                    : 'bg-green-600 hover:bg-green-500 text-white'
-                } disabled:opacity-50`}
-              >
-                {saving ? 'Saving…' : saved ? '✓ Evidence saved' : 'Save evidence'}
-              </button>
+                  <div className="mb-6 flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      detail.currentTier === 1 ? 'bg-yellow-500/20 text-yellow-400' :
+                      detail.currentTier === 2 ? 'bg-emerald-500/20 text-emerald-400' :
+                      'bg-gray-700 text-gray-400'
+                    }`}>Tier {detail.currentTier}</span>
+                    <span className="text-gray-400 text-sm">Score: {detail.currentScore ?? '—'}</span>
+                  </div>
+
+                  {latestAssessment && (
+                    <div className="mb-8">
+                      <h4 className="text-lg font-semibold text-white mb-3">Latest Assessment</h4>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-gray-800/50 rounded-xl p-4">
+                          <p className="text-xs text-gray-500">Tier</p>
+                          <p className="text-white font-bold">{latestAssessment.tier}</p>
+                        </div>
+                        <div className="bg-gray-800/50 rounded-xl p-4">
+                          <p className="text-xs text-gray-500">Pts to next tier</p>
+                          <p className="text-white font-bold">{latestAssessment.ptsToNextTier}</p>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-300 mb-2">Answers</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          {Object.entries(latestAssessment.answers).map(([key, val]) => (
+                            <div key={key} className="flex justify-between text-gray-400">
+                              <span className="text-gray-500">{key}:</span>
+                              <span>{val ?? '—'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-300 mb-2">Evidence</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          {Object.entries(latestAssessment.evidence).map(([key, val]) => (
+                            <div key={key} className="flex justify-between text-gray-400">
+                              <span className="text-gray-500">{key}:</span>
+                              <span>{String(val)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {latestAssessment.gaps.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-red-300 mb-2">Gaps</p>
+                          <ul className="space-y-1">
+                            {latestAssessment.gaps.map(gap => (
+                              <li key={gap} className="flex items-center gap-2 text-red-400 text-sm"><XCircle className="h-3 w-3" /> {gap}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {detail.assessmentHistory && detail.assessmentHistory.length > 1 && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-3">History</h4>
+                      <div className="space-y-3">
+                        {detail.assessmentHistory.slice(1).map((assessment: Assessment, i: number) => (
+                          <div key={i} className="bg-gray-800/30 rounded-xl p-4 flex justify-between text-sm">
+                            <div>
+                              <p className="text-gray-300">Tier {assessment.tier}</p>
+                              <p className="text-gray-500 text-xs">{new Date(assessment.scoredAt).toLocaleDateString()}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-gray-400">Pts to next: {assessment.ptsToNextTier}</p>
+                              {assessment.gaps.length > 0 && <p className="text-red-400 text-xs">{assessment.gaps.length} gaps</p>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        </div>
-      </aside>
-    </>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
-}
-
-function capitalise(s: string) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }

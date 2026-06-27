@@ -33,16 +33,24 @@ export interface DashboardStats {
 }
 
 export interface Farmer {
+  _id: string;
   phoneHash: string;
   location: string;
   cropType: string;
-  farmAccess: string;
   communityTies: string;
   currentTier: number;
-  currentScore: number;
-  currentTopReason: string;
+  currentScore: number | null;
   lastScoredAt: string;
   assessmentCount: number;
+  assessmentHistory?: Assessment[];
+}
+export interface Assessment {
+  scoredAt: string;
+  tier: number;
+  gaps: string[];
+  ptsToNextTier: number;
+  answers: Record<string, any>;
+  evidence: Record<string, any>;
 }
 
 export interface FarmerListResponse {

@@ -1,79 +1,42 @@
-// src/components/dashboard/StatsBar.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { api, DashboardStats } from '@/lib/api';
+import { Users, Layers, MapPin, BarChart3 } from 'lucide-react';
 
-const TIER_COLORS: Record<string, string> = {
-  Gold: 'text-yellow-400', Silver: 'text-blue-400',
-  Bronze: 'text-orange-400', Decline: 'text-red-400',
-};
-
-export function StatsBar({ location }: { location?: string }) {
+export function StatsBar() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.stats({ location })
+    api.stats()
       .then(setStats)
-      .catch(() => setStats(null))
+      .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [location]);
+  }, []);
 
-  const tier1 = stats?.tierBreakdown.find(t => t.tier === 1)?.count ?? 0;
-  const tier4 = stats?.tierBreakdown.find(t => t.tier === 4)?.count ?? 0;
-  const pendingReviews = stats ? stats.totalFarmers - tier1 - tier4 : 0;
+  if (loading) return <div className="h-20 bg-gray-900 animate-pulse rounded-xl" />;
+  if (error) return <div className="text-red-400 text-sm">{error}</div>;
+  if (!stats) return null;
 
   const cards = [
-    {
-      label: 'Farmers Assessed',
-      value: loading ? '—' : String(stats?.totalFarmers ?? 0),
-      sub: 'Total assessments',
-      color: 'text-green-400',
-    },
-    {
-      label: 'Approved (Gold)',
-      value: loading ? '—' : String(tier1),
-      sub: 'Tier 1 — ready to lend',
-      color: 'text-yellow-400',
-    },
-    {
-      label: 'Under Review',
-      value: loading ? '—' : String(pendingReviews),
-      sub: 'Silver & Bronze tier',
-      color: 'text-blue-400',
-    },
-    {
-      label: 'Declined',
-      value: loading ? '—' : String(tier4),
-      sub: 'Tier 4 — evidence gaps',
-      color: 'text-red-400',
-    },
+    { label: 'Total Farmers', value: stats.totalFarmers, icon: Users, color: 'text-emerald-400' },
+    { label: 'Gold Tier', value: stats.tierBreakdown.find(t => t.tier === 1)?.count ?? 0, icon: Layers, color: 'text-yellow-400' },
+    { label: 'Communities', value: stats.communityBreakdown.length, icon: MapPin, color: 'text-blue-400' },
+    { label: 'Avg Score', value: stats.totalFarmers ? Math.round(stats.tierBreakdown.reduce((acc, t) => acc + t.count, 0) / stats.tierBreakdown.length) : 0, icon: BarChart3, color: 'text-purple-400' },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map(c => (
-        <div key={c.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{c.label}</p>
-          <p className={`text-3xl font-bold ${c.color} font-serif`}>{c.value}</p>
-          <p className="text-xs text-gray-500 mt-1">{c.sub}</p>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map(({ label, value, icon: Icon, color }) => (
+        <div key={label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-400">{label}</span>
+            <Icon className={`h-5 w-5 ${color}`} />
+          </div>
+          <p className="text-2xl font-bold text-white mt-1">{value}</p>
         </div>
       ))}
-
-      {/* Community breakdown */}
-      {stats && stats.communityBreakdown.length > 0 && (
-        <div className="sm:col-span-2 lg:col-span-4 bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Community ties breakdown</p>
-          <div className="flex flex-wrap gap-3">
-            {stats.communityBreakdown.map(c => (
-              <div key={c.type} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
-                <span className="text-sm font-semibold text-white capitalize">{c.type || 'None'}</span>
-                <span className="text-xs text-gray-400">{c.count} farmers</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

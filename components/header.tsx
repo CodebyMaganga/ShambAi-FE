@@ -12,18 +12,19 @@ export function Header({ transparent = false }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-40 py-4 ${
-        transparent ? '' : 'bg-gray-950/80 backdrop-blur-md border-b border-gray-800'
-      }`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-40 py-4 ${
+      transparent ? '' : 'bg-gray-950/80 backdrop-blur-md border-b border-gray-800'
+    }`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <span className="text-white font-bold text-lg">ShambAI</span>
         <div className="flex items-center gap-4">
           {user ? (
             <>
               <span className="text-gray-300 text-sm hidden sm:inline">{user.email}</span>
-              <button onClick={logout} className="text-sm text-gray-300 hover:text-white px-3 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors">
+              <button
+                onClick={logout}
+                className="text-sm text-gray-300 hover:text-white px-3 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors"
+              >
                 Log out
               </button>
             </>

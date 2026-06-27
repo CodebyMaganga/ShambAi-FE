@@ -32,7 +32,6 @@ export function LoginDrawer({ open, onClose }: LoginDrawerProps) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -40,8 +39,6 @@ export function LoginDrawer({ open, onClose }: LoginDrawerProps) {
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           />
-
-          {/* Drawer */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -52,15 +49,11 @@ export function LoginDrawer({ open, onClose }: LoginDrawerProps) {
             <div className="p-6 h-full overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-white">Welcome to ShambAI</h3>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
+                <button onClick={onClose} className="text-gray-400 hover:text-white">
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Tabs */}
               <div className="flex bg-gray-800 rounded-lg p-1 mb-6">
                 {(['login', 'register'] as const).map((t) => (
                   <button
