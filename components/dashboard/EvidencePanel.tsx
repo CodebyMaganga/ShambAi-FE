@@ -105,7 +105,13 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                           {Object.entries(latestAssessment.answers).map(([key, val]) => (
                             <div key={key} className="flex justify-between text-gray-400">
                               <span className="text-gray-500">{key}:</span>
-                              <span>{val ?? '—'}</span>
+                              <span>
+                                {val === null || val === undefined
+                                  ? '—'
+                                  : typeof val === 'object'
+                                  ? JSON.stringify(val)
+                                  : String(val)}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -117,7 +123,13 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                           {Object.entries(latestAssessment.evidence).map(([key, val]) => (
                             <div key={key} className="flex justify-between text-gray-400">
                               <span className="text-gray-500">{key}:</span>
-                              <span>{String(val)}</span>
+                              <span>
+  {val === null || val === undefined
+    ? '—'
+    : typeof val === 'object'
+    ? JSON.stringify(val)
+    : String(val)}
+</span>
                             </div>
                           ))}
                         </div>
