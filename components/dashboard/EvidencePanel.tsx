@@ -276,18 +276,6 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
   )}
 </div>
 
-                      {/* Evidence */}
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-300 mb-2">Evidence</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                          {Object.entries(latestAssessment.evidence).map(([key, val]) => (
-                            <div key={key} className="flex justify-between text-gray-400">
-                              <span className="text-gray-500">{formatFieldName(key)}:</span>
-                              <span>{safeValue(val)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
 
                       {/* ── Farmer Guidance (always visible) ──────────────────────── */}
 <div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-xl p-5">
@@ -320,18 +308,22 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
 
   {/* Current tier summary */}
   <div className="mb-4 p-3 bg-gray-900 rounded-lg border border-gray-700">
-    <p className="text-xs text-gray-400">
-      Farmer is in <span className="font-semibold text-white">{currentTierInfo?.name}</span> tier
-      {currentTierInfo ? ` (score range ${currentTierInfo.range})` : ''}.
-    </p>
-    {latestAssessment && latestAssessment.ptsToNextTier > 0 ? (
+  <p className="text-xs text-gray-400">
+    Farmer is in <span className="font-semibold text-white">{currentTierInfo?.name}</span> tier
+    {currentTierInfo ? ` (score range ${currentTierInfo.range})` : ''}.
+  </p>
+  {latestAssessment && latestAssessment.ptsToNextTier !== undefined ? (
+    latestAssessment.ptsToNextTier > 0 ? (
       <p className="text-xs text-gray-400 mt-1">
         Needs <span className="font-semibold text-white">{latestAssessment.ptsToNextTier}</span> more points to reach the next tier.
       </p>
     ) : (
       <p className="text-xs text-gray-400 mt-1">Already at the highest tier.</p>
-    )}
-  </div>
+    )
+  ) : (
+    <p className="text-xs text-gray-500 mt-1 italic">Score progression details not available.</p>
+  )}
+</div>
 
   {/* Actionable steps */}
   {latestAssessment?.gaps && latestAssessment.gaps.length > 0 ? (
