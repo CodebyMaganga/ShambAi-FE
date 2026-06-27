@@ -35,7 +35,7 @@ export default function DashboardPage() {
             </div>
             <div className="hidden md:block bg-gray-900 border border-gray-800 rounded-xl px-5 py-3 text-right">
               <p className="text-xs text-gray-500">Farmer USSD code</p>
-              <p className="text-xl font-mono font-bold text-emerald-400 mt-0.5">*384*16051#</p>
+              <p className="text-xl font-mono font-bold text-emerald-400 mt-0.5">*384*38200#</p>
             </div>
           </div>
 
