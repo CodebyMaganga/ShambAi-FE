@@ -107,24 +107,26 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
 
   const latestAssessment: Assessment | undefined = detail?.assessmentHistory?.[0];
 
-  const handleMpesaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadMsg('');
-    try {
-      const result = await api.uploadFile(file);
-      setUploadMsg(`Uploaded: ${result.filename}`);
-      if (farmer?.phoneHash) {
-        const updated = await api.farmerDetail(farmer.phoneHash);
-        setDetail(updated as Farmer);
-      }
-    } catch (err: any) {
-      setUploadMsg(err.message || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
+const handleMpesaSimulate = async (e?: React.ChangeEvent<HTMLInputElement>) => {
+  // Ignore the file, just trigger simulation
+  if (!farmer?.phoneHash) return;
+  setUploading(true);
+  setUploadMsg('');
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/dashboard/farmers/${farmer.phoneHash}/simulate-mpesa`,
+      { method: 'POST' }
+    );
+    if (!res.ok) throw new Error('Simulation failed');
+    const data = await res.json();
+    setDetail(data.farmer as Farmer);
+    setUploadMsg('Statement simulated and score updated');
+  } catch (err: any) {
+    setUploadMsg(err.message || 'Simulation failed');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const tierExplanations: Record<number, { name: string; range: string; meaning: string }> = {
     1: { name: 'Gold', range: '75–100', meaning: 'Approved for max loan' },
@@ -374,41 +376,44 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
 
 
                       {/* M‑Pesa Upload (if consent = true) */}
-                      {latestAssessment.answers?.consentGiven === true && (
-                        <div className="mb-4 p-4 bg-gray-800/40 rounded-xl border border-gray-700">
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="h-4 w-4 text-emerald-400" />
-                            <p className="text-sm font-medium text-white">Upload M‑Pesa Statement (PDF)</p>
-                          </div>
-                          <p className="text-xs text-gray-500 mb-3">
-                            Farmer has given consent. Upload a PDF of her M‑Pesa statement for richer evidence.
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <label className="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                              <Upload className="h-4 w-4" />
-                              Choose PDF
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                onChange={handleMpesaUpload}
-                                disabled={uploading}
-                              />
-                            </label>
-                            {uploading && <span className="text-gray-400 text-sm">Uploading…</span>}
-                          </div>
-                          {uploadMsg && (
-                            <p className={`text-xs mt-2 ${uploadMsg.startsWith('Uploaded') ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {uploadMsg}
-                            </p>
-                          )}
-{detail.evidenceVerification?.mpesaStatement?.uploaded && (
-  <p className="text-xs text-emerald-400 mt-2">
-    Current statement: {detail.evidenceVerification?.mpesaStatement?.filename}
-  </p>
+{latestAssessment.answers?.consentGiven === true && (
+  <div className="mb-4 p-4 bg-gray-800/40 rounded-xl border border-gray-700">
+    <div className="flex items-center gap-2 mb-2">
+      <FileText className="h-4 w-4 text-emerald-400" />
+      <p className="text-sm font-medium text-white">Upload M‑Pesa Statement (PDF)</p>
+    </div>
+    <p className="text-xs text-gray-500 mb-3">
+      Farmer has given consent. Upload a PDF of her M‑Pesa statement – the score will be simulated for now.
+    </p>
+
+    <div className="flex items-center gap-3">
+      <label className="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+        <Upload className="h-4 w-4" />
+        Choose PDF
+        <input
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={handleMpesaSimulate}
+          disabled={uploading}
+        />
+      </label>
+      {uploading && <span className="text-gray-400 text-sm">Simulating…</span>}
+    </div>
+
+    {uploadMsg && (
+      <p className={`text-xs mt-2 ${uploadMsg.includes('failed') || uploadMsg.includes('error') ? 'text-red-400' : 'text-emerald-400'}`}>
+        {uploadMsg}
+      </p>
+    )}
+
+    {detail.evidenceVerification?.mpesaStatement?.uploaded && (
+      <p className="text-xs text-emerald-400 mt-2">
+        Current statement: {detail.evidenceVerification?.mpesaStatement?.filename}
+      </p>
+    )}
+  </div>
 )}
-                        </div>
-                      )}
                     </div>
                   )}
 
