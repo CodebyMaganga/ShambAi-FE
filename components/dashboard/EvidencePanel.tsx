@@ -349,10 +349,10 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                             </p>
                           )}
                           {detail.evidenceVerification?.mpesaStatement?.uploaded && (
-                            <p className="text-xs text-emerald-400 mt-2">
-                              Current statement: {detail.evidenceVerification.mpesaStatement.filename}
-                            </p>
-                          )}
+  <p className="text-xs text-emerald-400 mt-2">
+    Current statement: {detail.evidenceVerification?.mpesaStatement?.filename}
+  </p>
+)}
                         </div>
                       )}
                     </div>

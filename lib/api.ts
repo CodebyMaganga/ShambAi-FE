@@ -43,6 +43,32 @@ export interface Farmer {
   lastScoredAt: string;
   assessmentCount: number;
   assessmentHistory?: Assessment[];
+  // 👇 Add this block
+  evidenceVerification?: {
+    mpesaStatement?: {
+      uploaded: boolean;
+      filename: string | null;
+    };
+    chama?: {
+      id: string | null;
+      name: string | null;
+      verified: boolean;
+    };
+    land?: {
+      type: string | null;
+      uploaded: boolean;
+      filename: string | null;
+    };
+    communityVerification?: {
+      chamaMembershipVerified: boolean;
+      cooperativeMemberVerified: boolean;
+      womensGroupLeaderConfirmed: boolean;
+    };
+    notes?: string;
+    verifiedBy?: string | null;
+    verifiedAt?: string | null;
+  };
+  
 }
 export interface Assessment {
   scoredAt: string;
