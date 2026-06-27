@@ -9,7 +9,7 @@ import {
 import { api, Farmer, Assessment } from '@/lib/api';
 import { getCropDisplay } from '@/lib/api'; // helper from lib/api.ts
 
-const [smsPreview, setSmsPreview] = useState('');
+
 /* ── helpers ──────────────────────────────────────────────────── */
 function formatFieldName(key: string): string {
   return key
@@ -99,6 +99,7 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
+  const [smsPreview, setSmsPreview] = useState('');
 
   useEffect(() => {
     if (!farmer?.phoneHash) return;
