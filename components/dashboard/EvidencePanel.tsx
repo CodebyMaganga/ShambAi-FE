@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, MapPin, Wheat, Clock, CheckCircle, XCircle, Network,
-  Upload, FileText, AlertCircle
+  Upload, FileText, AlertCircle, MessageSquare
 } from 'lucide-react';
 import { api, Farmer, Assessment } from '@/lib/api';
 import { getCropDisplay } from '@/lib/api'; // helper from lib/api.ts
 
+const [smsPreview, setSmsPreview] = useState('');
 /* ── helpers ──────────────────────────────────────────────────── */
 function formatFieldName(key: string): string {
   return key
@@ -22,6 +23,8 @@ function safeValue(val: unknown): string {
   if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
 }
+
+
 
 /* ── action mapping (from backend explainer.js) ───────────────── */
 const GAP_ACTIONS: Record<string, {
@@ -88,6 +91,8 @@ interface EvidencePanelProps {
   onClose: () => void;
 }
 
+
+
 export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
   const [detail, setDetail] = useState<Farmer | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,6 +130,19 @@ const handleMpesaSimulate = async (e?: React.ChangeEvent<HTMLInputElement>) => {
     setUploadMsg(err.message || 'Simulation failed');
   } finally {
     setUploading(false);
+  }
+};
+
+const handleSmsPreview = async () => {
+  if (!farmer?.phoneHash) return;
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/dashboard/farmers/${farmer.phoneHash}/sms-preview`
+    );
+    const data = await res.json();
+    setSmsPreview(data.sms || '');
+  } catch (err) {
+    setSmsPreview('Failed to load SMS preview');
   }
 };
 
@@ -416,6 +434,28 @@ const handleMpesaSimulate = async (e?: React.ChangeEvent<HTMLInputElement>) => {
 )}
                     </div>
                   )}
+{/* ── SMS Preview ───────────────────────────────────── */}
+<div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+  <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+    <MessageSquare className="h-4 w-4 text-blue-400" />
+    SMS Preview
+  </h4>
+  <p className="text-xs text-gray-400 mb-3">
+    This is the exact SMS that would be sent to the farmer. You can share it with her now or send it later.
+  </p>
+  <button
+    onClick={handleSmsPreview}
+    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm transition-colors mb-3"
+  >
+    Show SMS
+  </button>
+  {smsPreview && (
+    <div className="bg-gray-900 border border-gray-700 rounded-lg p-3">
+      <p className="text-sm text-white whitespace-pre-wrap">{smsPreview}</p>
+    </div>
+  )}
+</div>
+
 
                   {/* History */}
                   {detail.assessmentHistory && detail.assessmentHistory.length > 1 && (
