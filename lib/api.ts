@@ -69,6 +69,7 @@ export interface Farmer {
     verifiedAt?: string | null;
   };
   
+  
 }
 export interface Assessment {
   scoredAt: string;

@@ -238,21 +238,43 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                       )}
 
                       {/* Answers */}
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-300 mb-2">Answers</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                          {Object.entries(latestAssessment.answers).map(([key, val]) => (
-                            <div key={key} className="flex justify-between text-gray-400">
-                              <span className="text-gray-500">{formatFieldName(key)}:</span>
-                              <span>
-                                {key === 'cropType'
-                                  ? getCropDisplay(val)
-                                  : safeValue(val)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+{/* Answers */}
+<div className="mb-4">
+  <p className="text-sm font-medium text-gray-300 mb-2">Answers</p>
+  {latestAssessment.answers ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+      {Object.entries(latestAssessment.answers).map(([key, val]) => (
+        <div key={key} className="flex justify-between text-gray-400">
+          <span className="text-gray-500">{formatFieldName(key)}:</span>
+          <span>
+            {key === 'cropType'
+              ? getCropDisplay(val)
+              : safeValue(val)}
+          </span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-xs text-gray-500">No answers recorded.</p>
+  )}
+</div>
+
+{/* Evidence */}
+<div className="mb-4">
+  <p className="text-sm font-medium text-gray-300 mb-2">Evidence</p>
+  {latestAssessment.evidence ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+      {Object.entries(latestAssessment.evidence).map(([key, val]) => (
+        <div key={key} className="flex justify-between text-gray-400">
+          <span className="text-gray-500">{formatFieldName(key)}:</span>
+          <span>{safeValue(val)}</span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-xs text-gray-500">No evidence recorded.</p>
+  )}
+</div>
 
                       {/* Evidence */}
                       <div className="mb-4">
@@ -267,57 +289,97 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                         </div>
                       </div>
 
-                      {/* Gaps */}
-                      {latestAssessment.gaps.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-red-300 mb-2">Gaps</p>
-                          <ul className="space-y-1">
-                            {latestAssessment.gaps.map(gap => (
-                              <li key={gap} className="flex items-center gap-2 text-red-400 text-sm">
-                                <XCircle className="h-3 w-3" /> {gap}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {/* ── Farmer Guidance (always visible) ──────────────────────── */}
+<div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+  <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+    <AlertCircle className="h-4 w-4 text-amber-400" />
+    Farmer Guidance
+  </h4>
 
-                      {/* Farmer Guidance */}
-                      {latestAssessment.gaps.length > 0 && (
-                        <div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-xl p-5">
-                          <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4 text-amber-400" />
-                            Farmer Guidance
-                          </h4>
-                          <p className="text-xs text-gray-400 mb-4">
-                            These are the actions the system would suggest to the farmer.
-                            Share them with her during your next visit or via SMS.
-                          </p>
-                          <div className="space-y-4">
-                            {latestAssessment.gaps.map((gap, idx) => {
-                              const action = GAP_ACTIONS[gap];
-                              if (!action) return null;
-                              return (
-                                <div key={gap} className="border border-gray-700 rounded-lg p-4">
-                                  <p className="text-xs text-gray-500 mb-1">Step {idx + 1}</p>
-                                  <p className="text-sm text-white font-medium">
-                                    {action.action_sw}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-0.5">
-                                    ({action.action_en})
-                                  </p>
-                                  <p className="text-xs text-emerald-400 mt-2">
-                                    <span className="text-gray-500">Unlocks: </span>
-                                    {action.outcome_sw} ({action.outcome_en})
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Recommended return: {action.weeks} weeks
-                                  </p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+  {/* Tier explanation */}
+  <div className="mb-4">
+    <details className="group">
+      <summary className="cursor-pointer text-sm text-gray-400 hover:text-white list-none flex items-center gap-1">
+        <span>How tiers are calculated</span>
+        <span className="text-xs ml-1 transition-transform group-open:rotate-90">▶</span>
+      </summary>
+      <div className="mt-2 text-xs text-gray-400 space-y-1 pl-2 border-l border-gray-700">
+        <p>Your assessment score (0–100) is built from:</p>
+        <ul className="list-disc list-inside ml-2">
+          <li>Farm stability (20 pts)</li>
+          <li>Crop value & assets (10 pts)</li>
+          <li>Community ties (30 pts) – the most important</li>
+          <li>Loan history (20 pts)</li>
+          <li>M‑Pesa cashflow (25 pts)</li>
+          <li>Weather risk & graph signals (±10/‑15 pts)</li>
+        </ul>
+        <p className="mt-1">Tiers: Gold (75+), Silver (60–74), Bronze (45–59), Referral (0–44).</p>
+      </div>
+    </details>
+  </div>
+
+  {/* Current tier summary */}
+  <div className="mb-4 p-3 bg-gray-900 rounded-lg border border-gray-700">
+    <p className="text-xs text-gray-400">
+      Farmer is in <span className="font-semibold text-white">{currentTierInfo?.name}</span> tier
+      {currentTierInfo ? ` (score range ${currentTierInfo.range})` : ''}.
+    </p>
+    {latestAssessment && latestAssessment.ptsToNextTier > 0 ? (
+      <p className="text-xs text-gray-400 mt-1">
+        Needs <span className="font-semibold text-white">{latestAssessment.ptsToNextTier}</span> more points to reach the next tier.
+      </p>
+    ) : (
+      <p className="text-xs text-gray-400 mt-1">Already at the highest tier.</p>
+    )}
+  </div>
+
+  {/* Actionable steps */}
+  {latestAssessment?.gaps && latestAssessment.gaps.length > 0 ? (
+    <div>
+      <p className="text-xs text-gray-400 mb-3">
+        These steps address the farmer’s specific gaps. Share them with her.
+      </p>
+      <div className="space-y-4">
+        {latestAssessment.gaps.map((gap, idx) => {
+          const action = GAP_ACTIONS[gap];
+          if (!action) return null;
+          return (
+            <div key={gap} className="border border-gray-700 rounded-lg p-4">
+              <p className="text-xs text-gray-500 mb-1">Step {idx + 1}</p>
+              <p className="text-sm text-white font-medium">
+                {action.action_sw}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                ({action.action_en})
+              </p>
+              <p className="text-xs text-emerald-400 mt-2">
+                <span className="text-gray-500">Unlocks: </span>
+                {action.outcome_sw} ({action.outcome_en})
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Recommended return: {action.weeks} weeks
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  ) : (
+    <div>
+      <p className="text-xs text-gray-400">
+        No specific gaps identified. The best next step is to maintain good standing:
+      </p>
+      <ul className="mt-2 space-y-1 text-xs text-gray-400 list-disc list-inside ml-2">
+        <li>Continue repaying loans on time</li>
+        <li>Stay active in community groups</li>
+        <li>Use M‑Pesa regularly for farming transactions</li>
+        <li>Re‑assess in 12 weeks to capture any new evidence</li>
+      </ul>
+    </div>
+  )}
+</div>
+
+
 
                       {/* M‑Pesa Upload (if consent = true) */}
                       {latestAssessment.answers?.consentGiven === true && (
@@ -348,7 +410,7 @@ export function EvidencePanel({ farmer, onClose }: EvidencePanelProps) {
                               {uploadMsg}
                             </p>
                           )}
-                          {detail.evidenceVerification?.mpesaStatement?.uploaded && (
+{detail.evidenceVerification?.mpesaStatement?.uploaded && (
   <p className="text-xs text-emerald-400 mt-2">
     Current statement: {detail.evidenceVerification?.mpesaStatement?.filename}
   </p>
